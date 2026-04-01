@@ -39,7 +39,7 @@ export default function About() {
     <section
       id="about"
       ref={ref}
-      className="relative py-32 px-8 md:px-16 lg:px-24 bg-obsidian-900 overflow-hidden"
+      className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-100 dark:bg-obsidian-900 overflow-hidden transition-colors duration-300"
     >
       {/* Background accent */}
       <div
@@ -74,7 +74,7 @@ export default function About() {
             </h2>
 
             <div
-              className={`space-y-5 text-white/55 font-body leading-relaxed transition-all duration-700 delay-200 ${
+              className={`space-y-5 text-slate-600 dark:text-white/55 font-body leading-relaxed transition-all duration-700 delay-200 ${
                 inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
             >
@@ -103,14 +103,14 @@ export default function About() {
                 inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
             >
-              <p className="font-mono text-xs text-white/30 tracking-widest uppercase mb-4">
+              <p className="font-mono text-xs text-slate-600 dark:text-white/30 tracking-widest uppercase mb-4">
                 Interests
               </p>
               <div className="flex flex-wrap gap-2">
                 {INTERESTS.map(({ icon, text }) => (
                   <span
                     key={text}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-obsidian-800 border border-white/8 rounded-full text-xs font-mono text-white/50 hover:border-amber-glow/30 hover:text-amber-glow/70 transition-all duration-300 cursor-default"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-obsidian-800 border border-slate-300 dark:border-white/8 rounded-full text-xs font-mono text-slate-700 dark:text-white/50 hover:border-amber-glow/30 hover:text-amber-glow/70 transition-all duration-300 cursor-default"
                   >
                     <span className="text-amber-glow/60">{icon}</span>
                     {text}
@@ -167,7 +167,7 @@ export default function About() {
                   <div className="font-display text-3xl font-bold text-amber-glow group-hover:glow-text transition-all duration-300 mb-1">
                     {value}
                   </div>
-                  <div className="font-mono text-xs text-white/40 tracking-wide">
+                  <div className="font-mono text-xs text-slate-600 dark:text-white/40 tracking-wide">
                     {label}
                   </div>
                 </div>

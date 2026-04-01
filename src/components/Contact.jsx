@@ -17,16 +17,16 @@ function FormField({ label, name, type = 'text', placeholder, textarea, value, o
     placeholder,
     onFocus: () => setFocused(true),
     onBlur: () => setFocused(false),
-    className: `w-full bg-obsidian-800 border rounded-lg px-4 py-3 font-body text-sm text-white placeholder-white/20 outline-none transition-all duration-300 resize-none ${
+    className: `w-full bg-white dark:bg-obsidian-800 border rounded-lg px-4 py-3 font-body text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 outline-none transition-all duration-300 resize-none ${
       focused
         ? 'border-amber-glow/50 shadow-[0_0_0_1px_rgba(245,166,35,0.15)]'
-        : 'border-white/8 hover:border-white/15'
+        : 'border-slate-300 dark:border-white/8 hover:border-slate-400 dark:hover:border-white/15'
     }`,
   }
 
   return (
     <div className="relative">
-      <label className="block font-mono text-xs tracking-widest uppercase text-white/30 mb-2">
+      <label className="block font-mono text-xs tracking-widest uppercase text-slate-600 dark:text-white/30 mb-2">
         {label}
       </label>
       {textarea ? (
@@ -76,7 +76,7 @@ export default function Contact() {
     <section
       id="contact"
       ref={setRef}
-      className="relative py-32 px-8 md:px-16 lg:px-24 bg-obsidian-950 overflow-hidden"
+      className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-200 dark:bg-obsidian-950 overflow-hidden transition-colors duration-300"
     >
       {/* Ambient glow */}
       <div
@@ -106,7 +106,7 @@ export default function Contact() {
             <span className="text-gradient">something great.</span>
           </h2>
           <p
-            className={`mt-6 text-white/40 font-body max-w-md mx-auto text-base transition-all duration-700 delay-200 ${
+            className={`mt-6 text-slate-600 dark:text-white/40 font-body max-w-md mx-auto text-base transition-all duration-700 delay-200 ${
               inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -125,10 +125,10 @@ export default function Contact() {
             {status === 'sent' ? (
               <div className="card-surface p-12 flex flex-col items-center justify-center text-center h-full min-h-[400px] border-amber-glow/20 glow-border">
                 <div className="text-5xl mb-6 animate-float">✦</div>
-                <h3 className="font-display text-2xl font-bold text-white mb-3">
+                <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-white mb-3">
                   Message sent!
                 </h3>
-                <p className="text-white/45 font-body text-sm mb-8">
+                <p className="text-slate-600 dark:text-white/45 font-body text-sm mb-8">
                   Thanks for reaching out — I'll be in touch soon.
                 </p>
                 <button
@@ -190,7 +190,7 @@ export default function Contact() {
               inView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
             }`}
           >
-            <p className="font-mono text-xs text-white/30 tracking-widest uppercase mb-6">
+            <p className="font-mono text-xs text-slate-600 dark:text-white/30 tracking-widest uppercase mb-6">
               Find me on
             </p>
 
@@ -201,20 +201,20 @@ export default function Contact() {
                   href={href}
                   target={href.startsWith('mailto') ? undefined : '_blank'}
                   rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-4 rounded-lg border border-white/8 bg-obsidian-800 hover:border-amber-glow/25 hover:bg-obsidian-700 transition-all duration-300 group"
+                  className="flex items-center gap-4 p-4 rounded-lg border border-slate-300 dark:border-white/8 bg-white dark:bg-obsidian-800 hover:border-amber-glow/25 hover:bg-slate-100 dark:hover:bg-obsidian-700 transition-all duration-300 group"
                 >
                   <span className="text-amber-glow/60 text-base w-6 text-center group-hover:text-amber-glow transition-colors duration-300">
                     {icon}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-mono text-xs text-white/30 tracking-widest uppercase mb-0.5">
+                    <div className="font-mono text-xs text-slate-500 dark:text-white/30 tracking-widest uppercase mb-0.5">
                       {label}
                     </div>
-                    <div className="font-body text-sm text-white/60 group-hover:text-white/80 transition-colors duration-300 truncate">
+                    <div className="font-body text-sm text-slate-700 dark:text-white/60 group-hover:text-slate-900 dark:group-hover:text-white/80 transition-colors duration-300 truncate">
                       {handle}
                     </div>
                   </div>
-                  <span className="text-white/20 group-hover:text-amber-glow/60 transition-all duration-300 group-hover:translate-x-1">
+                  <span className="text-slate-500 dark:text-white/20 group-hover:text-amber-glow/60 transition-all duration-300 group-hover:translate-x-1">
                     →
                   </span>
                 </a>
@@ -229,7 +229,7 @@ export default function Contact() {
                   Available
                 </span>
               </div>
-              <p className="font-body text-sm text-white/50 leading-relaxed">
+              <p className="font-body text-sm text-slate-700 dark:text-white/50 leading-relaxed">
                 Currently open to full-time roles and select freelance projects
                 starting Q2 2025.
               </p>
@@ -239,14 +239,14 @@ export default function Contact() {
       </div>
 
       {/* Footer */}
-      <div className="relative max-w-6xl mx-auto mt-24 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="font-mono text-xs text-white/20">
+      <div className="relative max-w-6xl mx-auto mt-24 pt-8 border-t border-slate-300 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="font-mono text-xs text-slate-500 dark:text-white/20">
           <span className="text-amber-glow/40">{'<'}</span>
           portfolio
           <span className="text-amber-glow/40">{' />'}</span>
           {' '}© 2025 Alex Chen
         </div>
-        <div className="font-mono text-xs text-white/20">
+        <div className="font-mono text-xs text-slate-500 dark:text-white/20">
           Built with React · Three.js · Tailwind CSS
         </div>
       </div>

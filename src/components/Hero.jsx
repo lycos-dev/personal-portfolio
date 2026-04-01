@@ -37,7 +37,7 @@ function useTypewriter(words, speed = 80, pause = 2000) {
   return text
 }
 
-export default function Hero() {
+export default function Hero({ theme, onToggleTheme }) {
   const [visible, setVisible] = useState(false)
   const role = useTypewriter(
     ['Creative Developer', 'UI/UX Architect', 'Digital Craftsman', 'Full Stack Engineer'],
@@ -55,7 +55,7 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-obsidian-900">
+    <section className="relative w-full h-screen overflow-hidden bg-slate-100 dark:bg-obsidian-900 transition-colors duration-300">
       {/* Three.js canvas */}
       <Scene />
 
@@ -65,13 +65,13 @@ export default function Hero() {
       {/* Vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, #0a0a0f 100%)' }}
+        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(15,23,42,0.18) 100%)' }}
       />
 
       {/* Bottom fade */}
       <div
         className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, #0a0a0f, transparent)' }}
+        style={{ background: 'linear-gradient(to top, rgba(15,23,42,0.2), transparent)' }}
       />
 
       {/* ── Navigation ──────────────────────────────────────────────────── */}
@@ -82,9 +82,9 @@ export default function Hero() {
       >
         {/* Logo */}
         <div className="font-mono text-sm text-amber-glow tracking-widest font-medium">
-          <span className="text-white/40">{'<'}</span>
+          <span className="text-slate-600 dark:text-white/40">{'<'}</span>
           portfolio
-          <span className="text-white/40">{' />'}</span>
+          <span className="text-slate-600 dark:text-white/40">{' />'}</span>
         </div>
 
         {/* Links */}
@@ -103,9 +103,18 @@ export default function Hero() {
         </ul>
 
         {/* CTA */}
-        <a href="#contact" className="btn-outline text-xs">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="font-mono text-[10px] tracking-widest uppercase px-3 py-2 rounded border border-slate-400/50 text-slate-700 dark:border-white/20 dark:text-white/70 hover:border-amber-glow/50 hover:text-amber-glow transition-all duration-300"
+          >
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </button>
+          <a href="#contact" className="btn-outline text-xs">
           Hire Me
-        </a>
+          </a>
+        </div>
       </nav>
 
       {/* ── Hero Content ─────────────────────────────────────────────────── */}
@@ -125,7 +134,7 @@ export default function Hero() {
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
-          <span className="block text-5xl md:text-7xl lg:text-8xl text-white mb-2">
+          <span className="block text-5xl md:text-7xl lg:text-8xl text-slate-900 dark:text-white mb-2">
             Hello, I'm
           </span>
           <span className="block text-6xl md:text-8xl lg:text-9xl text-gradient glow-text">
@@ -139,7 +148,7 @@ export default function Hero() {
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
-          <span className="font-mono text-xl md:text-2xl text-white/50">{'// '}</span>
+          <span className="font-mono text-xl md:text-2xl text-slate-600 dark:text-white/50">{'// '}</span>
           <span className="font-mono text-xl md:text-2xl text-amber-glow/80 min-w-[260px]">
             {role}
             <span className="animate-pulse text-amber-glow">▮</span>
@@ -148,7 +157,7 @@ export default function Hero() {
 
         {/* Description */}
         <p
-          className={`font-body text-white/50 text-base md:text-lg max-w-xl leading-relaxed mb-12 transition-all duration-700 delay-[900ms] ${
+          className={`font-body text-slate-600 dark:text-white/50 text-base md:text-lg max-w-xl leading-relaxed mb-12 transition-all duration-700 delay-[900ms] ${
             visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
           }`}
         >
@@ -177,7 +186,7 @@ export default function Hero() {
           visible ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <span className="font-mono text-[10px] tracking-[0.3em] text-white/30 uppercase">
+        <span className="font-mono text-[10px] tracking-[0.3em] text-slate-600 dark:text-white/30 uppercase">
           Scroll
         </span>
         <div className="w-px h-12 bg-gradient-to-b from-amber-glow/60 to-transparent animate-float" />
@@ -188,13 +197,13 @@ export default function Hero() {
         <span className="font-mono text-[10px] text-amber-glow tracking-widest">
           v2.0.25
         </span>
-        <span className="font-mono text-[10px] text-white/40 tracking-widest">
+        <span className="font-mono text-[10px] text-slate-600 dark:text-white/40 tracking-widest">
           PDL_SYSTEM
         </span>
       </div>
 
       <div className="absolute bottom-8 right-8 z-10 hidden lg:block">
-        <div className="font-mono text-[10px] text-white/20 tracking-widest text-right leading-relaxed">
+        <div className="font-mono text-[10px] text-slate-600 dark:text-white/20 tracking-widest text-right leading-relaxed">
           <div>THREE.js_ACTIVE</div>
           <div className="text-amber-glow/40">◉ RENDERING</div>
         </div>

@@ -59,7 +59,7 @@ function SkillCard({ group, inView, delay }) {
 
   return (
     <div
-      className={`card-surface p-7 transition-all duration-700 group hover:border-white/10 ${
+      className={`card-surface p-7 transition-all duration-700 group hover:border-slate-300 dark:hover:border-white/10 ${
         inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}
       style={{ transitionDelay: `${delay}ms` }}
@@ -77,10 +77,10 @@ function SkillCard({ group, inView, delay }) {
           {group.icon}
         </div>
         <div>
-          <h3 className="font-display text-sm font-bold text-white tracking-wide">
+          <h3 className="font-display text-sm font-bold text-slate-900 dark:text-white tracking-wide">
             {group.category}
           </h3>
-          <p className="font-mono text-[10px] text-white/30 tracking-widest mt-0.5">
+          <p className="font-mono text-[10px] text-slate-600 dark:text-white/30 tracking-widest mt-0.5">
             {group.skills.length} skills
           </p>
         </div>
@@ -98,7 +98,7 @@ function SkillCard({ group, inView, delay }) {
             {/* Name */}
             <span
               className="font-body text-sm transition-colors duration-200"
-              style={{ color: hovered === i ? group.color : 'rgba(255,255,255,0.55)' }}
+              style={{ color: hovered === i ? group.color : 'rgb(71 85 105 / 0.85)' }}
             >
               {skill.name}
             </span>
@@ -115,7 +115,7 @@ function SkillCard({ group, inView, delay }) {
                         ? hovered === i
                           ? group.color
                           : `${group.color}80`
-                        : 'rgba(255,255,255,0.08)',
+                        : 'rgb(148 163 184 / 0.35)',
                     boxShadow:
                       di < skill.level && hovered === i
                         ? `0 0 6px ${group.color}`
@@ -168,7 +168,7 @@ export default function Skills() {
     <section
       id="skills"
       ref={setRef}
-      className="relative py-32 px-8 md:px-16 lg:px-24 bg-obsidian-900 overflow-hidden"
+      className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-100 dark:bg-obsidian-900 overflow-hidden transition-colors duration-300"
     >
       {/* Background grid */}
       <div className="absolute inset-0 bg-grid opacity-50 pointer-events-none" />
@@ -220,14 +220,14 @@ export default function Skills() {
             inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
         >
-          <p className="font-mono text-xs text-white/30 tracking-widest uppercase mb-5">
+          <p className="font-mono text-xs text-slate-600 dark:text-white/30 tracking-widest uppercase mb-5">
             Also in the toolkit
           </p>
           <div className="flex flex-wrap gap-2">
             {EXTRA_TOOLS.map((tool) => (
               <span
                 key={tool}
-                className="font-mono text-xs px-3 py-1.5 rounded-md border border-white/8 text-white/40 bg-obsidian-800 hover:border-amber-glow/25 hover:text-amber-glow/60 hover:bg-obsidian-700 transition-all duration-300 cursor-default"
+                className="font-mono text-xs px-3 py-1.5 rounded-md border border-slate-300 dark:border-white/8 text-slate-700 dark:text-white/40 bg-white dark:bg-obsidian-800 hover:border-amber-glow/25 hover:text-amber-glow/60 hover:bg-slate-100 dark:hover:bg-obsidian-700 transition-all duration-300 cursor-default"
               >
                 {tool}
               </span>

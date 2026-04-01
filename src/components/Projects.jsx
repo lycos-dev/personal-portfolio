@@ -95,7 +95,7 @@ function ProjectCard({ project, inView, delay }) {
 
       {/* Project number */}
       <div className="flex items-center justify-between mb-6">
-        <span className="font-mono text-xs text-white/20">{project.id}</span>
+        <span className="font-mono text-xs text-slate-600 dark:text-white/20">{project.id}</span>
         {project.featured && (
           <span
             className="font-mono text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-full border"
@@ -112,12 +112,12 @@ function ProjectCard({ project, inView, delay }) {
       </p>
 
       {/* Title */}
-      <h3 className="font-display text-2xl font-bold text-white mb-3 group-hover:text-white transition-colors duration-300">
+      <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-slate-950 dark:group-hover:text-white transition-colors duration-300">
         {project.title}
       </h3>
 
       {/* Description */}
-      <p className="font-body text-sm text-white/45 leading-relaxed mb-6">
+      <p className="font-body text-sm text-slate-600 dark:text-white/45 leading-relaxed mb-6">
         {project.description}
       </p>
 
@@ -126,7 +126,7 @@ function ProjectCard({ project, inView, delay }) {
         {project.tags.map((tag) => (
           <span
             key={tag}
-            className="font-mono text-[11px] px-2 py-1 rounded bg-white/5 text-white/40 border border-white/8 group-hover:border-white/15 transition-colors duration-300"
+            className="font-mono text-[11px] px-2 py-1 rounded bg-slate-200 dark:bg-white/5 text-slate-600 dark:text-white/40 border border-slate-300 dark:border-white/8 group-hover:border-slate-400 dark:group-hover:border-white/15 transition-colors duration-300"
           >
             {tag}
           </span>
@@ -171,7 +171,7 @@ export default function Projects() {
     <section
       id="projects"
       ref={setRef}
-      className="relative py-32 px-8 md:px-16 lg:px-24 bg-obsidian-950 overflow-hidden"
+      className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-200 dark:bg-obsidian-950 overflow-hidden transition-colors duration-300"
     >
       {/* Right glow */}
       <div
