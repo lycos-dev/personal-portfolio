@@ -13,16 +13,16 @@ export default {
           600: '#242430',
         },
         amber: {
-          glow: '#f5a623',
-          soft: '#f7b84b',
-          dim: '#c47d0e',
+          glow: '#e5e7eb',
+          soft: '#f8fafc',
+          dim: '#9ca3af',
         },
         cyan: {
-          glow: '#00d4ff',
-          soft: '#40dfff',
-          dim: '#0099bb',
+          glow: '#cbd5e1',
+          soft: '#e2e8f0',
+          dim: '#64748b',
         },
-        muted: '#4a4a5a',
+        muted: '#94a3b8',
         'surface': '#111118',
       },
       fontFamily: {

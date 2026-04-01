@@ -8,166 +8,157 @@ export default function Scene() {
     const mount = mountRef.current
     if (!mount) return
 
-    // ── Renderer ──────────────────────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(mount.clientWidth, mount.clientHeight)
     renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
 
-    // ── Scene & Camera ────────────────────────────────────────────────────
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(60, mount.clientWidth / mount.clientHeight, 0.1, 100)
-    camera.position.set(0, 0, 5)
+    const camera = new THREE.PerspectiveCamera(
+      50,
+      mount.clientWidth / mount.clientHeight,
+      0.1,
+      100
+    )
+    camera.position.set(0, 0, 6)
 
-    // ── Mouse tracking ────────────────────────────────────────────────────
-    const mouse = { x: 0, y: 0 }
-    const target = { x: 0, y: 0 }
+    const group = new THREE.Group()
+    scene.add(group)
 
-    const handleMouseMove = (e) => {
-      mouse.x = (e.clientX / window.innerWidth - 0.5) * 2
-      mouse.y = -(e.clientY / window.innerHeight - 0.5) * 2
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-
-    // ── Primary wireframe icosahedron ─────────────────────────────────────
-    const icoGeo = new THREE.IcosahedronGeometry(1.6, 1)
-    const icoMat = new THREE.MeshBasicMaterial({
-      color: 0xf5a623,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.12,
+    const geometry = new THREE.IcosahedronGeometry(1.1, 2)
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      roughness: 0.25,
+      metalness: 0.55,
+      emissive: 0x1f2937,
+      emissiveIntensity: 0.2,
+      flatShading: true,
     })
-    const ico = new THREE.Mesh(icoGeo, icoMat)
-    scene.add(ico)
+    const core = new THREE.Mesh(geometry, material)
+    group.add(core)
 
-    // ── Secondary smaller icosahedron (cyan accent) ───────────────────────
-    const icoGeo2 = new THREE.IcosahedronGeometry(0.9, 1)
-    const icoMat2 = new THREE.MeshBasicMaterial({
-      color: 0x00d4ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.08,
-    })
-    const ico2 = new THREE.Mesh(icoGeo2, icoMat2)
-    ico2.position.set(2.5, -1, -1)
-    scene.add(ico2)
+    const wireframe = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.24, 1),
+      new THREE.MeshBasicMaterial({
+        color: 0x94a3b8,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.22,
+      })
+    )
+    group.add(wireframe)
 
-    // ── Third icosahedron ─────────────────────────────────────────────────
-    const icoGeo3 = new THREE.IcosahedronGeometry(0.6, 0)
-    const icoMat3 = new THREE.MeshBasicMaterial({
-      color: 0xf5a623,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.15,
-    })
-    const ico3 = new THREE.Mesh(icoGeo3, icoMat3)
-    ico3.position.set(-3, 1.5, -2)
-    scene.add(ico3)
+    const ambient = new THREE.AmbientLight(0xffffff, 0.55)
+    scene.add(ambient)
 
-    // ── Particle field ────────────────────────────────────────────────────
-    const particleCount = 800
-    const positions = new Float32Array(particleCount * 3)
-    const sizes = new Float32Array(particleCount)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
+    keyLight.position.set(3, 2, 4)
+    scene.add(keyLight)
+
+    const rimLight = new THREE.PointLight(0xcbd5e1, 1.2, 12, 2)
+    rimLight.position.set(-3, -1, 3)
+    scene.add(rimLight)
+
+    const particleCount = 180
+    const particlesGeo = new THREE.BufferGeometry()
+    const particlePositions = new Float32Array(particleCount * 3)
+    const particleSeeds = new Float32Array(particleCount)
 
     for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 20
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 20
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2
-      sizes[i] = Math.random() * 2 + 0.5
+      const i3 = i * 3
+      particlePositions[i3] = (Math.random() - 0.5) * 10
+      particlePositions[i3 + 1] = (Math.random() - 0.5) * 6
+      particlePositions[i3 + 2] = (Math.random() - 0.5) * 6
+      particleSeeds[i] = Math.random() * Math.PI * 2
     }
 
-    const particleGeo = new THREE.BufferGeometry()
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    particleGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
-
-    const particleMat = new THREE.PointsMaterial({
-      color: 0xf5a623,
-      size: 0.025,
+    particlesGeo.setAttribute(
+      'position',
+      new THREE.BufferAttribute(particlePositions, 3)
+    )
+    const particlesMat = new THREE.PointsMaterial({
+      color: 0xcbd5e1,
+      size: 0.03,
       transparent: true,
-      opacity: 0.5,
-      sizeAttenuation: true,
+      opacity: 0.6,
+      depthWrite: false,
     })
-
-    const particles = new THREE.Points(particleGeo, particleMat)
+    const particles = new THREE.Points(particlesGeo, particlesMat)
     scene.add(particles)
 
-    // ── Cyan accent particles ─────────────────────────────────────────────
-    const cyanCount = 200
-    const cyanPos = new Float32Array(cyanCount * 3)
-    for (let i = 0; i < cyanCount; i++) {
-      cyanPos[i * 3] = (Math.random() - 0.5) * 20
-      cyanPos[i * 3 + 1] = (Math.random() - 0.5) * 20
-      cyanPos[i * 3 + 2] = (Math.random() - 0.5) * 10 - 2
-    }
-    const cyanGeo = new THREE.BufferGeometry()
-    cyanGeo.setAttribute('position', new THREE.BufferAttribute(cyanPos, 3))
-    const cyanMat = new THREE.PointsMaterial({
-      color: 0x00d4ff,
-      size: 0.015,
-      transparent: true,
-      opacity: 0.35,
-      sizeAttenuation: true,
-    })
-    const cyanParticles = new THREE.Points(cyanGeo, cyanMat)
-    scene.add(cyanParticles)
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    const pointerTarget = new THREE.Vector2()
+    const hoverStrength = { current: 0, target: 0 }
+    const clickSpin = { velocity: 0 }
 
-    // ── Grid lines (horizontal plane) ─────────────────────────────────────
-    const gridGeo = new THREE.BufferGeometry()
-    const gridLines = []
-    const gridSize = 14
-    const gridStep = 1.4
-    for (let i = -gridSize / 2; i <= gridSize / 2; i += gridStep) {
-      gridLines.push(-gridSize / 2, -2.5, i, gridSize / 2, -2.5, i)
-      gridLines.push(i, -2.5, -gridSize / 2, i, -2.5, gridSize / 2)
+    const updatePointer = (clientX, clientY) => {
+      const rect = mount.getBoundingClientRect()
+      pointerTarget.x = ((clientX - rect.left) / rect.width) * 2 - 1
+      pointerTarget.y = -((clientY - rect.top) / rect.height) * 2 + 1
     }
-    gridGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(gridLines), 3))
-    const gridMat = new THREE.LineBasicMaterial({
-      color: 0xf5a623,
-      transparent: true,
-      opacity: 0.06,
-    })
-    const grid = new THREE.LineSegments(gridGeo, gridMat)
-    scene.add(grid)
 
-    // ── Animation loop ────────────────────────────────────────────────────
+    const handleMouseMove = (e) => updatePointer(e.clientX, e.clientY)
+    const handleTouchMove = (e) => {
+      if (!e.touches[0]) return
+      updatePointer(e.touches[0].clientX, e.touches[0].clientY)
+    }
+    const handleLeave = () => {
+      pointerTarget.x = 0
+      pointerTarget.y = 0
+      hoverStrength.target = 0
+    }
+    const handleClick = () => {
+      clickSpin.velocity += 0.28
+    }
+
+    mount.addEventListener('mousemove', handleMouseMove)
+    mount.addEventListener('touchmove', handleTouchMove, { passive: true })
+    mount.addEventListener('mouseleave', handleLeave)
+    mount.addEventListener('click', handleClick)
+
     let frameId
     const clock = new THREE.Clock()
+    const tempPos = particles.geometry.attributes.position.array
 
     const animate = () => {
       frameId = requestAnimationFrame(animate)
       const elapsed = clock.getElapsedTime()
 
-      // Smooth mouse follow
-      target.x += (mouse.x - target.x) * 0.04
-      target.y += (mouse.y - target.y) * 0.04
+      pointer.x += (pointerTarget.x - pointer.x) * 0.08
+      pointer.y += (pointerTarget.y - pointer.y) * 0.08
 
-      // Rotate icosahedrons
-      ico.rotation.x = elapsed * 0.08 + target.y * 0.3
-      ico.rotation.y = elapsed * 0.12 + target.x * 0.3
+      raycaster.setFromCamera(pointer, camera)
+      const hit = raycaster.intersectObject(core, false)
+      hoverStrength.target = hit.length > 0 ? 1 : 0
+      hoverStrength.current += (hoverStrength.target - hoverStrength.current) * 0.12
 
-      ico2.rotation.x = elapsed * 0.12
-      ico2.rotation.y = elapsed * 0.09 + target.x * 0.2
-      ico2.rotation.z = elapsed * 0.05
+      clickSpin.velocity *= 0.92
+      const idleFloat = Math.sin(elapsed * 0.9) * 0.12
+      const baseScale = 1 + hoverStrength.current * 0.12
+      const pulseScale = Math.sin(elapsed * 10) * 0.01 * hoverStrength.current
+      const finalScale = baseScale + pulseScale
 
-      ico3.rotation.x = elapsed * 0.15
-      ico3.rotation.y = elapsed * 0.1
-      ico3.rotation.z = elapsed * 0.07 + target.y * 0.15
+      group.rotation.y += 0.004 + clickSpin.velocity
+      group.rotation.x += 0.002
+      group.rotation.y += (pointer.x * 0.18 - group.rotation.y * 0.25) * 0.05
+      group.rotation.x += (-pointer.y * 0.16 - group.rotation.x * 0.2) * 0.05
+      group.position.y += (idleFloat - group.position.y) * 0.08
+      group.scale.setScalar(finalScale)
 
-      // Float the icosahedrons
-      ico.position.y = Math.sin(elapsed * 0.5) * 0.15
-      ico2.position.y = -1 + Math.sin(elapsed * 0.7 + 1) * 0.2
-      ico3.position.y = 1.5 + Math.sin(elapsed * 0.4 + 2) * 0.1
+      material.emissiveIntensity += (0.2 + hoverStrength.current * 0.45 - material.emissiveIntensity) * 0.1
+      wireframe.material.opacity += (0.22 + hoverStrength.current * 0.2 - wireframe.material.opacity) * 0.1
 
-      // Drift particles slowly
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3
+        tempPos[i3 + 1] += Math.sin(elapsed * 0.6 + particleSeeds[i]) * 0.0007
+      }
+      particles.geometry.attributes.position.needsUpdate = true
       particles.rotation.y = elapsed * 0.015
-      particles.rotation.x = elapsed * 0.008
-      cyanParticles.rotation.y = -elapsed * 0.012
-      cyanParticles.rotation.x = elapsed * 0.005
 
-      // Subtle camera parallax from mouse
-      camera.position.x += (target.x * 0.4 - camera.position.x) * 0.04
-      camera.position.y += (target.y * 0.25 - camera.position.y) * 0.04
+      camera.position.x += (pointer.x * 0.35 - camera.position.x) * 0.05
+      camera.position.y += (pointer.y * 0.22 - camera.position.y) * 0.05
       camera.lookAt(scene.position)
 
       renderer.render(scene, camera)
@@ -188,21 +179,18 @@ export default function Scene() {
     // ── Cleanup ───────────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(frameId)
-      window.removeEventListener('mousemove', handleMouseMove)
+      mount.removeEventListener('mousemove', handleMouseMove)
+      mount.removeEventListener('touchmove', handleTouchMove)
+      mount.removeEventListener('mouseleave', handleLeave)
+      mount.removeEventListener('click', handleClick)
       window.removeEventListener('resize', handleResize)
       renderer.dispose()
-      icoGeo.dispose()
-      icoMat.dispose()
-      icoGeo2.dispose()
-      icoMat2.dispose()
-      icoGeo3.dispose()
-      icoMat3.dispose()
-      particleGeo.dispose()
-      particleMat.dispose()
-      cyanGeo.dispose()
-      cyanMat.dispose()
-      gridGeo.dispose()
-      gridMat.dispose()
+      geometry.dispose()
+      material.dispose()
+      wireframe.geometry.dispose()
+      wireframe.material.dispose()
+      particlesGeo.dispose()
+      particlesMat.dispose()
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement)
       }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ContactScene from '../three/ContactScene'
 
 const SOCIAL_LINKS = [
   { label: 'GitHub', handle: '@alexchen', href: '#', icon: '⌥' },
@@ -78,6 +79,9 @@ export default function Contact() {
       ref={setRef}
       className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-200 dark:bg-obsidian-950 overflow-hidden transition-colors duration-300"
     >
+      {/* Placeholder mount for future 3D contact universe. */}
+      <ContactScene />
+
       {/* Ambient glow */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full pointer-events-none"

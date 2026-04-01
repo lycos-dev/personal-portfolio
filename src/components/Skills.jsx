@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import SkillsScene from '../three/SkillsScene'
 
 const SKILL_GROUPS = [
   {
@@ -170,6 +171,9 @@ export default function Skills() {
       ref={setRef}
       className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-100 dark:bg-obsidian-900 overflow-hidden transition-colors duration-300"
     >
+      {/* Placeholder mount for future 3D skills universe. */}
+      <SkillsScene />
+
       {/* Background grid */}
       <div className="absolute inset-0 bg-grid opacity-50 pointer-events-none" />
 

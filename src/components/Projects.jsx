@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ProjectsScene from '../three/ProjectsScene'
 
 const PROJECTS = [
   {
@@ -173,6 +174,9 @@ export default function Projects() {
       ref={setRef}
       className="relative py-32 px-8 md:px-16 lg:px-24 bg-slate-200 dark:bg-obsidian-950 overflow-hidden transition-colors duration-300"
     >
+      {/* Placeholder mount for future 3D projects universe. */}
+      <ProjectsScene />
+
       {/* Right glow */}
       <div
         className="absolute top-1/2 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"

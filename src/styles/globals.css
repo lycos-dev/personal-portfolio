@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --amber: #f5a623;
-    --cyan: #00d4ff;
+    --amber: #e5e7eb;
+    --cyan: #cbd5e1;
     --obsidian: #0a0a0f;
   }
 
@@ -20,16 +20,11 @@
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #0a0a0f;
+    color: #e2e2e8;
     font-family: 'DM Sans', sans-serif;
     overflow-x: hidden;
     transition: background-color 200ms ease, color 200ms ease;
-  }
-
-  .dark body {
-    background-color: #0a0a0f;
-    color: #e2e2e8;
   }
 
   /* Custom scrollbar */
@@ -38,47 +33,43 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #e2e8f0;
-  }
-
-  .dark ::-webkit-scrollbar-track {
     background: #0a0a0f;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #f5a623;
+    background: #9ca3af;
     border-radius: 2px;
   }
 
   ::selection {
-    background: rgba(245, 166, 35, 0.25);
-    color: #f5a623;
+    background: rgba(229, 231, 235, 0.25);
+    color: #f8fafc;
   }
 }
 
 @layer components {
   .section-label {
-    @apply font-mono text-xs tracking-[0.25em] uppercase text-amber-dim dark:text-amber-glow/60;
+    @apply font-mono text-xs tracking-[0.25em] uppercase text-amber-glow/60;
   }
 
   .section-title {
-    @apply font-display text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white leading-tight;
+    @apply font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight;
   }
 
   .glow-text {
-    text-shadow: 0 0 30px rgba(245, 166, 35, 0.5);
+    text-shadow: 0 0 30px rgba(226, 232, 240, 0.45);
   }
 
   .glow-border {
-    box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.2), 0 0 20px rgba(245, 166, 35, 0.1);
+    box-shadow: 0 0 0 1px rgba(203, 213, 225, 0.2), 0 0 20px rgba(203, 213, 225, 0.1);
   }
 
   .card-surface {
-    @apply bg-white/90 dark:bg-obsidian-800 border border-slate-900/10 dark:border-white/5 rounded-xl;
+    @apply bg-obsidian-800 border border-white/5 rounded-xl;
   }
 
   .nav-link {
-    @apply font-mono text-xs tracking-widest uppercase text-slate-600 dark:text-muted hover:text-amber-glow transition-colors duration-300 relative;
+    @apply font-mono text-xs tracking-widest uppercase text-muted hover:text-amber-glow transition-colors duration-300 relative;
   }
 
   .btn-primary {
@@ -92,15 +83,15 @@
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #f5a623 0%, #00d4ff 100%);
+    background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-grid {
-    background-image: linear-gradient(rgba(245,166,35,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245,166,35,0.04) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(226,232,240,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226,232,240,0.05) 1px, transparent 1px);
     background-size: 60px 60px;
   }
 
