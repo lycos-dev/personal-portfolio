@@ -1,30 +1,29 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-const R    = 1.40           // globe radius
-const SURF = R + 0.013      // surface layer for trees / markers
-const ROAD = R + 0.009      // road layer (just above surface)
-const ATM  = R * 1.082      // atmosphere shell radius
+// ─── Constants ───────────────────────────────────────────────────────────────
+const R    = 1.40
+const SURF = R + 0.013
+const ROAD = R + 0.009
+const ATM  = R * 1.082
 
-// ─── Section markers (lat / lon in degrees) ─────────────────────────────────
+// ─── Section markers ─────────────────────────────────────────────────────────
 const SECTION_POINTS = [
-  { id: 'skills',   label: 'Skills',   lat:  25, lon:  45 },   // Arabian Peninsula
-  { id: 'projects', label: 'Projects', lat:  42, lon: -95 },   // Central USA
-  { id: 'contact',  label: 'Contact',  lat: -14, lon: -48 },   // Central Brazil
+  { id: 'skills',   label: 'Skills',   lat:  25, lon:  45 },
+  { id: 'projects', label: 'Projects', lat:  42, lon: -95 },
+  { id: 'contact',  label: 'Contact',  lat: -14, lon: -48 },
 ]
 
-// ─── Road routes as [lat, lon] waypoint arrays ───────────────────────────────
+// ─── Road routes ─────────────────────────────────────────────────────────────
 const ROUTES = [
-  [[25,45],[45,20],[48,-10],[44,-65],[42,-95]],            // Skills → Projects (over Atlantic)
-  [[42,-95],[26,-88],[11,-76],[-5,-63],[-14,-48]],         // Projects → Contact (through C. America)
-  [[-14,-48],[-10,14],[6,22],[17,35],[25,45]],             // Contact → Skills (through Africa)
-  [[42,-95],[44,-112],[44,-124]],                           // Side branch: US West Coast
-  [[25,45],[22,72],[16,100],[6,105]],                       // Side branch: India → SE Asia
+  [[25,45],[45,20],[48,-10],[44,-65],[42,-95]],
+  [[42,-95],[26,-88],[11,-76],[-5,-63],[-14,-48]],
+  [[-14,-48],[-10,14],[6,22],[17,35],[25,45]],
+  [[42,-95],[44,-112],[44,-124]],
+  [[25,45],[22,72],[16,100],[6,105]],
 ]
 
-// ─── Geo helpers ─────────────────────────────────────────────────────────────
-/** lat/lon (°) → THREE.Vector3 on sphere of radius r */
+// ─── Geo helpers ──────────────────────────────────────────────────────────────
 function ll(lat, lon, r = R) {
   const φ = (90 - lat) * Math.PI / 180
   const θ = (lon + 180) * Math.PI / 180
@@ -35,7 +34,6 @@ function ll(lat, lon, r = R) {
   )
 }
 
-/** Great-circle arc between two Vector3 points, projected to radius r */
 function arcSeg(a, b, steps, r) {
   const pts = []
   for (let i = 0; i <= steps; i++)
@@ -43,7 +41,6 @@ function arcSeg(a, b, steps, r) {
   return pts
 }
 
-/** Build a CatmullRom-ready point array for a route of [lat,lon] waypoints */
 function routePts(waypoints, r = ROAD) {
   const nodes = waypoints.map(([la, lo]) => ll(la, lo))
   let out = []
@@ -52,38 +49,38 @@ function routePts(waypoints, r = ROAD) {
   return out
 }
 
-// ─── Deterministic pseudo-random (stable between renders) ───────────────────
+// ─── Deterministic RNG ───────────────────────────────────────────────────────
 function rng(n) {
   const s = Math.sin(n * 9301.0 + 49297.0) * 233280.0
   return s - Math.floor(s)
 }
 
-// ─── Biome classification ────────────────────────────────────────────────────
+// ─── Biome helpers ────────────────────────────────────────────────────────────
 function isLand(lat, lon) {
-  if (lat > 12  && lat < 72  && lon > -170 && lon < -52)  return true // N. America
-  if (lat > 60  && lat < 85  && lon > -58  && lon < -17)  return true // Greenland
-  if (lat > -57 && lat < 13  && lon > -82  && lon < -33)  return true // S. America
-  if (lat > 35  && lat < 72  && lon > -12  && lon < 40)   return true // Europe
-  if (lat > -36 && lat < 38  && lon > -18  && lon < 52)   return true // Africa
-  if (lat > 1   && lat < 77  && lon > 26   && lon < 145)  return true // Asia
-  if (lat > -8  && lat < 23  && lon > 95   && lon < 141)  return true // SE Asia
-  if (lat > -44 && lat < -10 && lon > 113  && lon < 154)  return true // Australia
-  if (lat < -68)                                           return true // Antarctica
+  if (lat > 12  && lat < 72  && lon > -170 && lon < -52)  return true
+  if (lat > 60  && lat < 85  && lon > -58  && lon < -17)  return true
+  if (lat > -57 && lat < 13  && lon > -82  && lon < -33)  return true
+  if (lat > 35  && lat < 72  && lon > -12  && lon < 40)   return true
+  if (lat > -36 && lat < 38  && lon > -18  && lon < 52)   return true
+  if (lat > 1   && lat < 77  && lon > 26   && lon < 145)  return true
+  if (lat > -8  && lat < 23  && lon > 95   && lon < 141)  return true
+  if (lat > -44 && lat < -10 && lon > 113  && lon < 154)  return true
+  if (lat < -68)                                           return true
   return false
 }
 
 function isMountain(lat, lon) {
-  if (lat > 30 && lat < 62 && lon > -126 && lon < -110) return true // Rockies
-  if (lat > -50 && lat < 5 && lon > -79  && lon < -63)  return true // Andes
-  if (lat > 43 && lat < 49 && lon > 5   && lon < 17)   return true  // Alps
-  if (lat > 26 && lat < 38 && lon > 73  && lon < 102)  return true  // Himalayas
+  if (lat > 30 && lat < 62 && lon > -126 && lon < -110) return true
+  if (lat > -50 && lat < 5 && lon > -79  && lon < -63)  return true
+  if (lat > 43 && lat < 49 && lon > 5   && lon < 17)   return true
+  if (lat > 26 && lat < 38 && lon > 73  && lon < 102)  return true
   return false
 }
 
 function isDesert(lat, lon) {
-  if (lat > 14 && lat < 34 && lon > -18 && lon < 40)    return true // Sahara
-  if (lat > 11 && lat < 34 && lon > 35  && lon < 61)    return true // Arabian
-  if (lat > -33 && lat < -17 && lon > 117 && lon < 143) return true // Australian Outback
+  if (lat > 14 && lat < 34 && lon > -18 && lon < 40)    return true
+  if (lat > 11 && lat < 34 && lon > 35  && lon < 61)    return true
+  if (lat > -33 && lat < -17 && lon > 117 && lon < 143) return true
   return false
 }
 
@@ -97,7 +94,6 @@ function biome(lat, lon) {
   return 'land'
 }
 
-// ─── Biome → base colour (RGB floats 0–1) ────────────────────────────────────
 const BIOME_COL = {
   ocean:    [0.04, 0.11, 0.23],
   snow:     [0.83, 0.90, 0.94],
@@ -108,10 +104,38 @@ const BIOME_COL = {
   desert:   [0.76, 0.62, 0.26],
 }
 
-// ─── Biome → terrain elevation offset ────────────────────────────────────────
 const BIOME_ELEV = {
   ocean: -0.008, land: 0.011, tropical: 0.013,
   tundra: 0.009, desert: 0.007, mountain: 0.032, snow: 0.014,
+}
+
+// ─── Lat/lon ↔ degrees conversion helpers ────────────────────────────────────
+const DEG = Math.PI / 180
+const RAD = 180 / Math.PI
+
+// Move a lat/lon by (dlat, dlon) in degrees, clamped
+function moveLoc(lat, lon, dlat, dlon) {
+  return {
+    lat: THREE.MathUtils.clamp(lat + dlat, -85, 85),
+    lon: ((lon + dlon + 540) % 360) - 180,
+  }
+}
+
+// Great-circle bearing from (lat1,lon1) → (lat2,lon2) in radians
+function bearing(lat1, lon1, lat2, lon2) {
+  const φ1 = lat1 * DEG, φ2 = lat2 * DEG
+  const Δλ = (lon2 - lon1) * DEG
+  const y = Math.sin(Δλ) * Math.cos(φ2)
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
+  return Math.atan2(y, x)   // radians, 0 = North, clockwise
+}
+
+// Great-circle distance in degrees
+function gcDist(lat1, lon1, lat2, lon2) {
+  const φ1 = lat1 * DEG, φ2 = lat2 * DEG
+  const Δφ = φ2 - φ1, Δλ = (lon2 - lon1) * DEG
+  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2
+  return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * RAD
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -122,65 +146,52 @@ export default function GlobeScene() {
     const mount = mountRef.current
     if (!mount) return
 
-    // ── Renderer ──────────────────────────────────────────────────────────
+    // ── Renderer ───────────────────────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(mount.clientWidth, mount.clientHeight)
     renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
 
-    // ── Scene / Camera ────────────────────────────────────────────────────
+    // ── Scene / Camera ─────────────────────────────────────────────────────
     const scene      = new THREE.Scene()
-    const camera     = new THREE.PerspectiveCamera(42, mount.clientWidth / mount.clientHeight, 0.1, 100)
+    const camera     = new THREE.PerspectiveCamera(52, mount.clientWidth / mount.clientHeight, 0.1, 100)
     camera.position.set(0, 0, 6)
     const globeGroup = new THREE.Group()
     scene.add(globeGroup)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 1 ▸ GLOBE — vertex-coloured + displaced sphere
-    // ─────────────────────────────────────────────────────────────────────
-    const SEG     = 92
+    // ── 1 ▸ GLOBE ──────────────────────────────────────────────────────────
+    const SEG      = 92
     const geoGlobe = new THREE.SphereGeometry(R, SEG, SEG)
-    const gPos    = geoGlobe.attributes.position
-    const gCol    = new Float32Array(gPos.count * 3)
+    const gPos     = geoGlobe.attributes.position
+    const gCol     = new Float32Array(gPos.count * 3)
 
     for (let i = 0; i < gPos.count; i++) {
       const x = gPos.getX(i), y = gPos.getY(i), z = gPos.getZ(i)
-
-      // Convert cartesian → lat/lon
-      const lat = Math.asin(THREE.MathUtils.clamp(y / R, -1, 1)) * 180 / Math.PI
+      const lat = Math.asin(THREE.MathUtils.clamp(y / R, -1, 1)) * RAD
       let θv    = Math.atan2(z, -x)
       if (θv < 0) θv += 2 * Math.PI
-      const lon = θv * 180 / Math.PI - 180
-
+      const lon = θv * RAD - 180
       const b   = biome(lat, lon)
       const col = BIOME_COL[b]
-
-      // Per-vertex noise for natural variation
-      const noise = rng(i) * 0.5 - 0.25  // -0.125 .. +0.125
+      const noise = rng(i) * 0.5 - 0.25
       const elev  = (BIOME_ELEV[b] ?? 0) + noise * (b === 'mountain' ? 0.024 : 0.004)
       const sc    = (R + elev) / R
-
       gPos.setXYZ(i, x * sc, y * sc, z * sc)
-
       const j = noise * 0.07
       gCol[i*3]   = THREE.MathUtils.clamp(col[0] + j, 0, 1)
       gCol[i*3+1] = THREE.MathUtils.clamp(col[1] + j, 0, 1)
       gCol[i*3+2] = THREE.MathUtils.clamp(col[2] + j, 0, 1)
     }
-
     gPos.needsUpdate = true
     geoGlobe.computeVertexNormals()
     geoGlobe.setAttribute('color', new THREE.BufferAttribute(gCol, 3))
-
     globeGroup.add(new THREE.Mesh(
       geoGlobe,
       new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.04 }),
     ))
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 2 ▸ ATMOSPHERE — two shells for inner glow + outer haze
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 2 ▸ ATMOSPHERE ─────────────────────────────────────────────────────
     globeGroup.add(new THREE.Mesh(
       new THREE.SphereGeometry(ATM, 32, 32),
       new THREE.MeshStandardMaterial({
@@ -196,9 +207,7 @@ export default function GlobeScene() {
       }),
     ))
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 3 ▸ SUBTLE WIREFRAME OVERLAY
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 3 ▸ WIREFRAME OVERLAY ──────────────────────────────────────────────
     globeGroup.add(new THREE.Mesh(
       new THREE.SphereGeometry(R * 1.002, 22, 22),
       new THREE.MeshBasicMaterial({
@@ -206,50 +215,35 @@ export default function GlobeScene() {
       }),
     ))
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 4 ▸ ROADS — dark asphalt body + pale centre stripe per route
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 4 ▸ ROADS ──────────────────────────────────────────────────────────
     const matRoadBody = new THREE.MeshStandardMaterial({ color: 0x1c1a16, roughness: 0.96 })
     const matRoadLine = new THREE.MeshStandardMaterial({
       color: 0xc8b870, transparent: true, opacity: 0.60, roughness: 0.9,
     })
-
     ROUTES.forEach((route) => {
-      // Road body
       const pts  = routePts(route, ROAD + 0.002)
       const crv  = new THREE.CatmullRomCurve3(pts)
       globeGroup.add(new THREE.Mesh(
-        new THREE.TubeGeometry(crv, pts.length * 2, 0.006, 4, false),
-        matRoadBody,
+        new THREE.TubeGeometry(crv, pts.length * 2, 0.006, 4, false), matRoadBody,
       ))
-      // Centre dashes (slightly higher so they're always visible)
       const pts2 = routePts(route, ROAD + 0.004)
       const crv2 = new THREE.CatmullRomCurve3(pts2)
       globeGroup.add(new THREE.Mesh(
-        new THREE.TubeGeometry(crv2, pts.length * 2, 0.0014, 3, false),
-        matRoadLine,
+        new THREE.TubeGeometry(crv2, pts.length * 2, 0.0014, 3, false), matRoadLine,
       ))
     })
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 5 ▸ TREES — three InstancedMesh layers (trunk + 2 foliage cones)
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 5 ▸ TREES ──────────────────────────────────────────────────────────
     const MAX_TREES = 300
     const iTreeLo   = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.024, 0.060, 5),
-      new THREE.MeshStandardMaterial({ color: 0x1d4a16, roughness: 0.90 }),
-      MAX_TREES,
-    )
+      new THREE.MeshStandardMaterial({ color: 0x1d4a16, roughness: 0.90 }), MAX_TREES)
     const iTreeHi   = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.017, 0.048, 5),
-      new THREE.MeshStandardMaterial({ color: 0x285c1d, roughness: 0.90 }),
-      MAX_TREES,
-    )
+      new THREE.MeshStandardMaterial({ color: 0x285c1d, roughness: 0.90 }), MAX_TREES)
     const iTrunk    = new THREE.InstancedMesh(
       new THREE.CylinderGeometry(0.004, 0.006, 0.036, 5),
-      new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 1.00 }),
-      MAX_TREES,
-    )
+      new THREE.MeshStandardMaterial({ color: 0x4a3018, roughness: 1.00 }), MAX_TREES)
 
     const dummy = new THREE.Object3D()
     const UP    = new THREE.Vector3(0, 1, 0)
@@ -260,93 +254,62 @@ export default function GlobeScene() {
       const lon = (rng(i * 3 + 1) - 0.5) * 360
       const b   = biome(lat, lon)
       if (b !== 'land' && b !== 'tropical' && b !== 'tundra') continue
-
       const sc  = 0.7 + rng(i * 3 + 2) * 0.8
       const q   = new THREE.Quaternion().setFromUnitVectors(UP, ll(lat, lon).normalize())
-
-      // Trunk
       dummy.position.copy(ll(lat, lon, SURF - 0.006))
-      dummy.quaternion.copy(q)
-      dummy.scale.setScalar(sc)
-      dummy.updateMatrix()
+      dummy.quaternion.copy(q); dummy.scale.setScalar(sc); dummy.updateMatrix()
       iTrunk.setMatrixAt(tc, dummy.matrix)
-
-      // Lower foliage
       dummy.position.copy(ll(lat, lon, SURF + 0.018 * sc))
-      dummy.scale.setScalar(sc)
-      dummy.updateMatrix()
+      dummy.scale.setScalar(sc); dummy.updateMatrix()
       iTreeLo.setMatrixAt(tc, dummy.matrix)
-
-      // Upper foliage (smaller, offset higher)
       dummy.position.copy(ll(lat, lon, SURF + 0.038 * sc))
-      dummy.scale.set(sc * 0.74, sc * 0.74, sc * 0.74)
-      dummy.updateMatrix()
+      dummy.scale.set(sc * 0.74, sc * 0.74, sc * 0.74); dummy.updateMatrix()
       iTreeHi.setMatrixAt(tc, dummy.matrix)
-
       tc++
     }
-
     iTreeLo.count = iTreeHi.count = iTrunk.count = tc
     iTreeLo.instanceMatrix.needsUpdate = true
     iTreeHi.instanceMatrix.needsUpdate = true
     iTrunk.instanceMatrix.needsUpdate  = true
     globeGroup.add(iTreeLo, iTreeHi, iTrunk)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 6 ▸ MOUNTAIN PEAKS — cone body + snow cap (InstancedMesh × 2)
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 6 ▸ MOUNTAIN PEAKS ────────────────────────────────────────────────
     const MAX_PEAKS = 110
     const iPeak     = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.020, 0.065, 6),
-      new THREE.MeshStandardMaterial({ color: 0x8c7b6a, roughness: 0.80 }),
-      MAX_PEAKS,
-    )
+      new THREE.MeshStandardMaterial({ color: 0x8c7b6a, roughness: 0.80 }), MAX_PEAKS)
     const iSnow     = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.011, 0.027, 6),
-      new THREE.MeshStandardMaterial({ color: 0xe0eaf2, roughness: 0.55 }),
-      MAX_PEAKS,
-    )
+      new THREE.MeshStandardMaterial({ color: 0xe0eaf2, roughness: 0.55 }), MAX_PEAKS)
     let pc = 0
 
     for (let i = 0; i < 2000 && pc < MAX_PEAKS; i++) {
       const lat = (rng(i * 5 + 1000) - 0.5) * 140
       const lon = (rng(i * 5 + 1001) - 0.5) * 360
       if (!isMountain(lat, lon)) continue
-
       const sc  = 0.55 + rng(i * 5 + 1002) * 1.1
       const q   = new THREE.Quaternion().setFromUnitVectors(UP, ll(lat, lon).normalize())
-
       dummy.position.copy(ll(lat, lon, R + 0.033 * sc))
-      dummy.quaternion.copy(q)
-      dummy.scale.setScalar(sc)
-      dummy.updateMatrix()
+      dummy.quaternion.copy(q); dummy.scale.setScalar(sc); dummy.updateMatrix()
       iPeak.setMatrixAt(pc, dummy.matrix)
-
       dummy.position.copy(ll(lat, lon, R + 0.058 * sc))
-      dummy.scale.setScalar(sc * 0.82)
-      dummy.updateMatrix()
+      dummy.scale.setScalar(sc * 0.82); dummy.updateMatrix()
       iSnow.setMatrixAt(pc, dummy.matrix)
-
       pc++
     }
-
     iPeak.count = iSnow.count = pc
     iPeak.instanceMatrix.needsUpdate = true
     iSnow.instanceMatrix.needsUpdate = true
     globeGroup.add(iPeak, iSnow)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 7 ▸ CLOUDS — single InstancedMesh, grouped for independent rotation
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 7 ▸ CLOUDS ────────────────────────────────────────────────────────
     const MAX_CLOUDS  = 80
     const iClouds     = new THREE.InstancedMesh(
       new THREE.SphereGeometry(1, 6, 5),
       new THREE.MeshStandardMaterial({
         color: 0xf8fbff, transparent: true, opacity: 0.76,
         roughness: 1, depthWrite: false,
-      }),
-      MAX_CLOUDS,
-    )
+      }), MAX_CLOUDS)
     const cloudGroup = new THREE.Group()
     globeGroup.add(cloudGroup)
     cloudGroup.add(iClouds)
@@ -357,7 +320,6 @@ export default function GlobeScene() {
       [ -8, 22],[ 26,-64],[ 57, 78],[-28,132],[  14,-32],
     ]
     let cc = 0
-
     CLOUD_SEEDS.forEach(([clat, clon], ci) => {
       const cPos  = ll(clat, clon, ATM * 0.99)
       const nrm   = cPos.clone().normalize()
@@ -365,86 +327,135 @@ export default function GlobeScene() {
       if (right.length() < 0.01) right.set(1, 0, 0).cross(nrm)
       right.normalize()
       const fwd = nrm.clone().cross(right).normalize()
-
       const blobs = 3 + Math.floor(rng(ci * 7) * 3)
       for (let b = 0; b < blobs && cc < MAX_CLOUDS; b++) {
         const ox = (rng(ci*7+b+1) - 0.5) * 0.11
         const oy =  rng(ci*7+b+2) * 0.012
         const oz = (rng(ci*7+b+3) - 0.5) * 0.09
         const sc =  0.030 + rng(ci*7+b+4) * 0.044
-
         dummy.position.copy(cPos)
           .addScaledVector(right, ox)
           .addScaledVector(nrm, oy + 0.006)
           .addScaledVector(fwd, oz)
-        dummy.rotation.set(0, 0, 0)
-        dummy.scale.setScalar(sc)
-        dummy.updateMatrix()
-        iClouds.setMatrixAt(cc, dummy.matrix)
-        cc++
+        dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(sc); dummy.updateMatrix()
+        iClouds.setMatrixAt(cc, dummy.matrix); cc++
       }
     })
-
     iClouds.count = cc
     iClouds.instanceMatrix.needsUpdate = true
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 8 ▸ SECTION MARKERS — gold sphere + pulsing ring + pin stem
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 8 ▸ SECTION MARKERS ───────────────────────────────────────────────
     const matRing = new THREE.MeshBasicMaterial({
       color: 0xffd740, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
     })
     const matStem = new THREE.MeshStandardMaterial({ color: 0xffd740, roughness: 0.45 })
 
     const markerMeshes = SECTION_POINTS.map((pt) => {
-      const ballPos  = ll(pt.lat, pt.lon, SURF + 0.046)
-      const stemPos  = ll(pt.lat, pt.lon, SURF + 0.014)
-      const nrm      = stemPos.clone().normalize()
-
-      // Main sphere (cloned mat so emissiveIntensity is per-marker)
-      const matBall  = new THREE.MeshStandardMaterial({
+      const ballPos = ll(pt.lat, pt.lon, SURF + 0.046)
+      const stemPos = ll(pt.lat, pt.lon, SURF + 0.014)
+      const nrm     = stemPos.clone().normalize()
+      const matBall = new THREE.MeshStandardMaterial({
         color: 0xfef8e8, emissive: 0xffd740, emissiveIntensity: 0.85, roughness: 0.25,
       })
       const ball = new THREE.Mesh(new THREE.SphereGeometry(0.052, 14, 14), matBall)
       ball.position.copy(ballPos)
-      ball.userData = { id: pt.id, label: pt.label }
+      ball.userData = { id: pt.id, label: pt.label, lat: pt.lat, lon: pt.lon }
       globeGroup.add(ball)
 
-      // Pulsing ring (cloned mat so opacity is per-marker)
       const ring = new THREE.Mesh(new THREE.RingGeometry(0.065, 0.090, 32), matRing.clone())
-      ring.position.copy(ballPos)
-      ring.lookAt(0, 0, 0)
+      ring.position.copy(ballPos); ring.lookAt(0, 0, 0)
       globeGroup.add(ring)
 
-      // Pin stem
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.0040, 0.0028, 0.050, 5), matStem)
       stem.position.copy(stemPos)
       stem.quaternion.setFromUnitVectors(UP, nrm)
       globeGroup.add(stem)
 
-      return { ball, ring }
+      return { ball, ring, pt }
     })
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 9 ▸ LIGHTS
-    // ─────────────────────────────────────────────────────────────────────
-    scene.add(new THREE.AmbientLight(0xffffff, 0.42))
+    // ── 9 ▸ MOTORCYCLE MESH ───────────────────────────────────────────────
+    //   Built from primitives: body + wheels + handlebars
+    const motoGroup = new THREE.Group()
+    globeGroup.add(motoGroup)
 
+    const matChrome  = new THREE.MeshStandardMaterial({ color: 0xd4d8e0, metalness: 0.9, roughness: 0.15 })
+    const matBlack   = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.6  })
+    const matAccent  = new THREE.MeshStandardMaterial({ color: 0xff6030, metalness: 0.7, roughness: 0.2  })
+    const matHeadlt  = new THREE.MeshStandardMaterial({ color: 0xfff8e0, emissive: 0xffdd88, emissiveIntensity: 1.2 })
+
+    // Body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.016, 0.068), matAccent)
+    body.position.set(0, 0.018, 0)
+    motoGroup.add(body)
+
+    // Fairing / nose
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.032, 6), matAccent)
+    nose.rotation.x = -Math.PI / 2
+    nose.position.set(0, 0.018, -0.046)
+    motoGroup.add(nose)
+
+    // Seat hump
+    const hump = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 6), matBlack)
+    hump.scale.set(0.85, 0.7, 1.4)
+    hump.position.set(0, 0.026, 0.018)
+    motoGroup.add(hump)
+
+    // Fuel tank
+    const tank = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), matChrome)
+    tank.scale.set(0.9, 0.7, 1.5)
+    tank.position.set(0, 0.024, -0.010)
+    motoGroup.add(tank)
+
+    // Front wheel
+    const wGeo = new THREE.TorusGeometry(0.020, 0.005, 8, 18)
+    const frontWheel = new THREE.Mesh(wGeo, matBlack)
+    frontWheel.rotation.y = Math.PI / 2
+    frontWheel.position.set(0, 0, -0.048)
+    motoGroup.add(frontWheel)
+
+    // Rear wheel
+    const rearWheel = new THREE.Mesh(wGeo.clone(), matBlack)
+    rearWheel.rotation.y = Math.PI / 2
+    rearWheel.position.set(0, 0, 0.046)
+    motoGroup.add(rearWheel)
+
+    // Handlebar
+    const hbGeo = new THREE.CylinderGeometry(0.003, 0.003, 0.034, 6)
+    const hb    = new THREE.Mesh(hbGeo, matChrome)
+    hb.rotation.z = Math.PI / 2
+    hb.position.set(0, 0.026, -0.030)
+    motoGroup.add(hb)
+
+    // Headlight
+    const headlight = new THREE.Mesh(new THREE.SphereGeometry(0.009, 8, 6), matHeadlt)
+    headlight.position.set(0, 0.018, -0.058)
+    motoGroup.add(headlight)
+
+    // Exhaust pipe
+    const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.004, 0.038, 6), matChrome)
+    exhaust.rotation.z = Math.PI / 2
+    exhaust.position.set(0.018, 0.004, 0.020)
+    motoGroup.add(exhaust)
+
+    // Point light on headlight
+    const headlightPt = new THREE.PointLight(0xffe8a0, 1.8, 0.6, 2)
+    headlightPt.position.set(0, 0.02, -0.07)
+    motoGroup.add(headlightPt)
+
+    // ── 10 ▸ LIGHTS ────────────────────────────────────────────────────────
+    scene.add(new THREE.AmbientLight(0xffffff, 0.42))
     const sun = new THREE.DirectionalLight(0xfff3cc, 1.90)
     sun.position.set(3.5, 2.2, 4.0)
     scene.add(sun)
-
     const fill = new THREE.DirectionalLight(0xaac4ff, 0.36)
     fill.position.set(-3.0, -1.5, -2.0)
     scene.add(fill)
-
     const rim = new THREE.PointLight(0xc8dce8, 1.15, 14, 2)
     rim.position.set(-4, -2, 3)
     scene.add(rim)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 10 ▸ STAR PARTICLES
-    // ─────────────────────────────────────────────────────────────────────
+    // ── 11 ▸ STAR PARTICLES ────────────────────────────────────────────────
     const starBuf = new Float32Array(220 * 3)
     for (let i = 0; i < 220; i++) {
       starBuf[i*3]   = (Math.random() - 0.5) * 20
@@ -455,88 +466,100 @@ export default function GlobeScene() {
     starGeo.setAttribute('position', new THREE.BufferAttribute(starBuf, 3))
     const stars = new THREE.Points(
       starGeo,
-      new THREE.PointsMaterial({
-        color: 0xddeeff, size: 0.026, transparent: true, opacity: 0.50, depthWrite: false,
-      }),
+      new THREE.PointsMaterial({ color: 0xddeeff, size: 0.026, transparent: true, opacity: 0.50, depthWrite: false }),
     )
     scene.add(stars)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 11 ▸ INTERACTION STATE
-    // ─────────────────────────────────────────────────────────────────────
-    const ptr    = new THREE.Vector2()
-    const ptrT   = new THREE.Vector2()
-    const ray    = new THREE.Raycaster()
-    let hovered  = null
-    let isDragging = false, dragMoved = false
-    let dragSX = 0, dragSY = 0
-    let yaw = 0, pitch = 0, yawT = 0, pitchT = 0, dragYaw = 0, dragPitch = 0
+    // ═══════════════════════════════════════════════════════════════════════
+    // 12 ▸ MOTORCYCLE CONTROLLER
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // State lives in a plain object — no React state, only mutated in the
+    // animation loop to avoid re-renders.
+    //
+    // Coordinate system:
+    //   lat/lon — bike position on the globe
+    //   heading — angle in radians (0 = North, clockwise)
+    //   speed   — current linear speed in deg/s (globe-surface degrees)
+    //
+    // Each frame:
+    //   1. Read keys → adjust heading & speed
+    //   2. Integrate position:  lat += cos(heading)*speed*dt,  lon += sin(heading)*speed*dt / cos(lat)
+    //   3. Place motoGroup: position = ll(lat, lon, SURF+offset), orientation via quaternion from
+    //      surface-normal (up) × forward-tangent
+    //   4. Camera offset = behind + above in local surface frame, lerped with spring
+    //   5. camera.rotation.z = –turnRate * bankScale  (lean effect)
+    //
+    // Autopilot (marker click):
+    //   Sets bike.autopilot = { targetLat, targetLon }
+    //   Each frame steers heading toward great-circle bearing to target,
+    //   speeds up then brakes as it approaches, clears when within 0.5°.
 
-    // Camera rig (same Bezier system as original)
-    const rig = {
-      cur:  new THREE.Vector3(0, 0, 6),
-      tgt:  new THREE.Vector3(0, 0, 6),
-      ride: {
-        on: false, t: 0, dur: 1.2,
-        s: new THREE.Vector3(0, 0, 6),
-        c: new THREE.Vector3(0, 0, 6),
-        e: new THREE.Vector3(0, 0, 6),
-        bank: 0,
-      },
+    const bike = {
+      lat: 25, lon: 45,         // start at Skills marker
+      heading: 0,               // radians, 0 = North
+      speed: 0,                 // deg/s
+      turnRate: 0,              // radians/s (for bank lean)
+      wheelAngle: 0,            // accumulated wheel spin
+      autopilot: null,          // { targetLat, targetLon }
     }
 
-    const DESTINATIONS = {
-      skills:   new THREE.Vector3( 2.2,  0.8, 4.0),
-      projects: new THREE.Vector3(-1.7,  0.9, 4.1),
-      contact:  new THREE.Vector3( 0.5, -1.5, 4.2),
-    }
+    const keys = { w: false, s: false, a: false, d: false,
+                   ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false }
 
-    const updatePtr = (cx, cy) => {
+    const onKeyDown = (e) => { if (e.key in keys) { keys[e.key] = true; e.preventDefault() } }
+    const onKeyUp   = (e) => { if (e.key in keys) { keys[e.key] = false } }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('keyup',   onKeyUp)
+
+    // ── Marker click → autopilot ─────────────────────────────────────────
+    const ray = new THREE.Raycaster()
+    const ptr = new THREE.Vector2()
+    const onCLK = (e) => {
       const rc = mount.getBoundingClientRect()
-      ptrT.x =  ((cx - rc.left) / rc.width)  * 2 - 1
-      ptrT.y = -((cy - rc.top)  / rc.height) * 2 + 1
+      ptr.x =  ((e.clientX - rc.left) / rc.width)  * 2 - 1
+      ptr.y = -((e.clientY - rc.top)  / rc.height) * 2 + 1
+      ray.setFromCamera(ptr, camera)
+      const hits = ray.intersectObjects(markerMeshes.map(m => m.ball), false)
+      if (hits.length > 0) {
+        const { lat, lon } = hits[0].object.userData
+        bike.autopilot = { targetLat: lat, targetLon: lon }
+        bike.speed = Math.max(bike.speed, 3) // ensure moving
+      }
     }
+    mount.addEventListener('click', onCLK)
+    mount.style.cursor = 'pointer'
 
-    const focusSection = (id) => {
-      const end = DESTINATIONS[id]
-      if (!end) return
-      const r = rig.ride
-      r.on = true; r.t = 0
-      r.s.copy(rig.cur)
-      r.e.copy(end)
-      // Elevated midpoint → smooth motorcycle arc
-      r.c.copy(r.s).lerp(r.e, 0.5).add(new THREE.Vector3(0, 1.0, -0.4))
-      r.bank = THREE.MathUtils.clamp((r.e.x - r.s.x) * 0.12, -0.22, 0.22)
-    }
+    // ── Camera spring state ───────────────────────────────────────────────
+    const camPos    = new THREE.Vector3(0, 0, 6)  // smoothed camera world position
+    const camLookAt = new THREE.Vector3()          // smoothed look-at target
+    const bankAngle = { cur: 0 }                   // smoothed z-roll
 
-    const onMM = (e) => {
-      updatePtr(e.clientX, e.clientY)
-      if (!isDragging) return
-      if (Math.abs(e.clientX - dragSX) + Math.abs(e.clientY - dragSY) > 4) dragMoved = true
-      yawT   = dragYaw   + (e.clientX - dragSX) * 0.004
-      pitchT = THREE.MathUtils.clamp(dragPitch + (e.clientY - dragSY) * 0.004, -0.5, 0.5)
-    }
-    const onMD = (e) => {
-      isDragging = true; dragMoved = false
-      dragSX = e.clientX; dragSY = e.clientY
-      dragYaw = yawT; dragPitch = pitchT
-    }
-    const onMU  = ()  => { isDragging = false }
-    const onML  = ()  => { ptrT.set(0, 0); hovered = null; isDragging = false }
-    const onCLK = ()  => { if (!dragMoved && hovered) focusSection(hovered.userData.id) }
+    // ── Reusable vectors (avoid GC) ───────────────────────────────────────
+    const surfNormal  = new THREE.Vector3()
+    const northTan    = new THREE.Vector3()
+    const eastTan     = new THREE.Vector3()
+    const bikeForward = new THREE.Vector3()
+    const bikeRight   = new THREE.Vector3()
+    const bikePos     = new THREE.Vector3()
+    const camTarget   = new THREE.Vector3()
+    const lookTarget  = new THREE.Vector3()
 
-    mount.addEventListener('mousemove',  onMM)
-    mount.addEventListener('mousedown',  onMD)
-    mount.addEventListener('mouseup',    onMU)
-    mount.addEventListener('mouseleave', onML)
-    mount.addEventListener('click',      onCLK)
+    // ── Throttle / brake constants ────────────────────────────────────────
+    const ACCEL       = 12    // deg/s²
+    const BRAKE       = 18    // deg/s²
+    const DRAG        = 5     // deg/s² passive friction
+    const MAX_SPEED   = 22    // deg/s
+    const TURN_SPEED  = 95    // deg/s at full speed (scales with speed)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // 12 ▸ ANIMATION LOOP
-    // ─────────────────────────────────────────────────────────────────────
+    // Camera rig offsets (in local bike frame, globe-surface space)
+    const CAM_BACK   = 0.30   // metres behind bike (globe units ≈ degrees*R*π/180)
+    const CAM_UP     = 0.14   // metres above surface
+    const CAM_SPRING = 0.07   // lerp factor per frame (~60fps feel)
+    const BANK_SCALE = 0.40   // max roll radians
+
+    // ── Animation loop ────────────────────────────────────────────────────
     const clock = new THREE.Clock()
-    const rP    = new THREE.Vector3()
-    const rF    = new THREE.Vector3()
     let fid
 
     const animate = () => {
@@ -544,77 +567,170 @@ export default function GlobeScene() {
       const dt = Math.min(clock.getDelta(), 0.033)
       const t  = clock.elapsedTime
 
-      // Pointer smooth-follow
-      ptr.x += (ptrT.x - ptr.x) * 0.08
-      ptr.y += (ptrT.y - ptr.y) * 0.08
+      // ── A. Input / Autopilot ────────────────────────────────────────────
+      const forward = keys.w || keys.ArrowUp
+      const back    = keys.s || keys.ArrowDown
+      const left    = keys.a || keys.ArrowLeft
+      const right   = keys.d || keys.ArrowRight
 
-      // Marker hover detection
-      ray.setFromCamera(ptr, camera)
-      const hits = ray.intersectObjects(markerMeshes.map(m => m.ball), false)
-      hovered = hits.length > 0 ? hits[0].object : null
-      mount.style.cursor = hovered ? 'pointer' : 'grab'
+      let desiredTurn = 0
 
-      // Globe auto-spin + drag rotation
-      yawT += 0.0015
-      yaw  += (yawT - yaw)   * 0.08
-      pitch += (pitchT - pitch) * 0.08
-      globeGroup.rotation.y = yaw
-      globeGroup.rotation.x = pitch
+      if (bike.autopilot) {
+        const { targetLat, targetLon } = bike.autopilot
+        const dist = gcDist(bike.lat, bike.lon, targetLat, targetLon)
 
-      // Marker scale + ring pulse animations
+        if (dist < 0.5) {
+          // Arrived
+          bike.autopilot = null
+          bike.speed *= 0.3
+        } else {
+          // Steer toward target
+          const tgtBearing = bearing(bike.lat, bike.lon, targetLat, targetLon)
+          // Smallest angle diff
+          let diff = tgtBearing - bike.heading
+          while (diff >  Math.PI) diff -= 2 * Math.PI
+          while (diff < -Math.PI) diff += 2 * Math.PI
+          desiredTurn = THREE.MathUtils.clamp(diff * 3.5, -1, 1)
+
+          // Speed: ramp up, then brake within 4°
+          const targetSpeed = dist < 4 ? THREE.MathUtils.mapLinear(dist, 0.5, 4, 2, MAX_SPEED * 0.7) : MAX_SPEED * 0.85
+          if (bike.speed < targetSpeed) bike.speed = Math.min(targetSpeed, bike.speed + ACCEL * dt)
+          else                          bike.speed = Math.max(targetSpeed, bike.speed - BRAKE * dt)
+        }
+      } else {
+        // Manual input
+        if (forward) bike.speed = Math.min(MAX_SPEED, bike.speed + ACCEL * dt)
+        if (back)    bike.speed = Math.max(0,         bike.speed - BRAKE * dt)
+        if (!forward && !back) bike.speed = Math.max(0, bike.speed - DRAG * dt)
+        if (left)  desiredTurn = -1
+        if (right) desiredTurn =  1
+      }
+
+      // ── B. Heading & position integration ──────────────────────────────
+      const speedFrac   = bike.speed / MAX_SPEED
+      const turnDegPerS = TURN_SPEED * speedFrac * desiredTurn * DEG
+      bike.heading     += turnDegPerS * dt
+      bike.turnRate     = turnDegPerS  // stored for bank
+
+      // Surface integration in degrees
+      //   Δlat = cos(heading) * speed * dt
+      //   Δlon = sin(heading) * speed * dt / cos(lat)   (account for meridian convergence)
+      const cosLat = Math.cos(bike.lat * DEG) || 0.001
+      bike.lat += Math.cos(bike.heading) * bike.speed * dt
+      bike.lon += Math.sin(bike.heading) * bike.speed * dt / cosLat
+      bike.lat  = THREE.MathUtils.clamp(bike.lat, -85, 85)
+      bike.lon  = ((bike.lon + 540) % 360) - 180
+
+      // Wheel spin
+      bike.wheelAngle += bike.speed * dt * 6
+
+      // ── C. Place motorcycle on globe ────────────────────────────────────
+      //   surface normal at bike position
+      bikePos.copy(ll(bike.lat, bike.lon, SURF + 0.020))
+      surfNormal.copy(ll(bike.lat, bike.lon)).normalize()
+
+      // Tangent vectors: north = ∂/∂lat, east = ∂/∂lon
+      const latR = bike.lat * DEG
+      const lonR = bike.lon * DEG
+      northTan.set(
+        Math.cos(latR) * Math.cos(lonR + Math.PI),  // ∂x/∂lat (note our x-flip)
+        -Math.sin(latR),
+        Math.cos(latR) * Math.sin(lonR + Math.PI),
+      ).negate().normalize()   // pointing toward pole = north on sphere
+      // East is orthogonal in the tangent plane
+      eastTan.crossVectors(surfNormal, northTan).normalize()
+
+      // Forward direction in world space from heading angle
+      bikeForward.copy(northTan).multiplyScalar(Math.cos(bike.heading))
+                 .addScaledVector(eastTan, Math.sin(bike.heading))
+      bikeRight.crossVectors(bikeForward, surfNormal).negate()
+
+      // Build orientation quaternion: bike faces forward, up = surface normal
+      const motoMat = new THREE.Matrix4().makeBasis(bikeRight, surfNormal, bikeForward.clone().negate())
+      motoGroup.position.copy(bikePos)
+      motoGroup.quaternion.setFromRotationMatrix(motoMat)
+
+      // Wheel spin animation
+      frontWheel.rotation.x = bike.wheelAngle
+      rearWheel.rotation.x  = bike.wheelAngle
+
+      // Lean into turns (rotate around forward axis)
+      const leanAngle = -bike.turnRate * speedFrac * 0.18
+      motoGroup.rotateOnAxis(bikeForward.clone().normalize(), leanAngle)
+
+      // ── D. Globe group orientation — keep bike visible ──────────────────
+      //   We rotate the *globe* so the bike position is always facing the camera,
+      //   not the camera chasing the bike in world space.
+      //
+      //   Target globe rotation: bike sits at (0,0,R) in globe-local = facing camera.
+      //   We compute the quaternion that rotates bikePos (globe-local) onto +Z (camera axis).
+      //
+      //   This is the "globe-follows-bike" pattern used instead of moving camera around globe.
+
+      const bikePosLocal = ll(bike.lat, bike.lon).normalize()
+      const cameraAxis   = new THREE.Vector3(0, 0, 1)
+      const globeQ       = new THREE.Quaternion().setFromUnitVectors(bikePosLocal, cameraAxis)
+
+      // Also align heading upward (north = screen up)
+      // We do a secondary rotation around Z to keep orientation readable
+      globeGroup.quaternion.slerp(globeQ, 0.045)
+
+      // ── E. Camera — follow behind & above bike ──────────────────────────
+      //   In world space, the bike is near (0,0,R·scale) after globe rotation.
+      //   Camera target = bikeWorldPos + backVec + upVec in world space.
+      //   We compute this from globe's current transform.
+
+      const bikeWorldPos = new THREE.Vector3()
+      motoGroup.getWorldPosition(bikeWorldPos)
+
+      // World-space surface normal (after globe rotation)
+      const worldNormal = surfNormal.clone().applyQuaternion(globeGroup.quaternion)
+
+      // World-space forward direction of bike
+      const worldFwd = bikeForward.clone().applyQuaternion(globeGroup.quaternion)
+
+      // Camera position: back along fwd, up along normal
+      camTarget.copy(bikeWorldPos)
+        .addScaledVector(worldFwd,    CAM_BACK)
+        .addScaledVector(worldNormal, CAM_UP)
+      // Zoom out a bit
+      camTarget.add(new THREE.Vector3(0, 0, 3.2))
+
+      lookTarget.copy(bikeWorldPos).addScaledVector(worldFwd, -0.12)
+
+      // Spring lerp
+      camPos.lerp(camTarget, CAM_SPRING)
+      camLookAt.lerp(lookTarget, CAM_SPRING * 1.4)
+
+      camera.position.copy(camPos)
+      camera.lookAt(camLookAt)
+
+      // Bank lean on camera
+      const targetBank = -bike.turnRate * speedFrac * BANK_SCALE
+      bankAngle.cur += (targetBank - bankAngle.cur) * 0.08
+      camera.rotation.z = bankAngle.cur
+
+      // ── F. Passive scene animations ─────────────────────────────────────
+      cloudGroup.rotation.y = t * 0.011
+      stars.rotation.y      = t * 0.006
+
+      // Marker pulse
       markerMeshes.forEach(({ ball, ring }, i) => {
-        const isHov = ball === hovered
-        const ts    = isHov ? 1.60 : 1
-        ball.scale.lerp(new THREE.Vector3(ts, ts, ts), 0.14)
-        ball.material.emissiveIntensity +=
-          ((isHov ? 1.25 : 0.85) - ball.material.emissiveIntensity) * 0.14
-
         const p = 1 + Math.sin(t * 2.4 + i * 1.6) * 0.14
         ring.scale.setScalar(p)
         ring.material.opacity = 0.28 + Math.sin(t * 2.4 + i * 1.6) * 0.22
+        // Highlight if autopilot target
+        const isTarget = bike.autopilot &&
+          Math.abs(ball.userData.lat - bike.autopilot.targetLat) < 1
+        ball.material.emissiveIntensity = isTarget ? 1.6 : 0.85
+        ball.scale.setScalar(isTarget ? 1.3 : 1.0)
       })
-
-      // Cloud layer drifts slightly faster than globe
-      cloudGroup.rotation.y = t * 0.011
-
-      // Stars drift
-      stars.rotation.y = t * 0.006
-
-      // ── Camera Bezier ride (same logic as original) ──
-      const r = rig.ride
-      if (r.on) {
-        r.t = Math.min(1, r.t + dt / r.dur)
-        const e  = 1 - Math.pow(1 - r.t, 3)
-        const e2 = Math.min(1, e + 0.03)
-
-        rP.copy(r.s).multiplyScalar((1-e)*(1-e))
-          .addScaledVector(r.c, 2*(1-e)*e)
-          .addScaledVector(r.e, e*e)
-
-        rF.copy(r.s).multiplyScalar((1-e2)*(1-e2))
-          .addScaledVector(r.c, 2*(1-e2)*e2)
-          .addScaledVector(r.e, e2*e2)
-
-        rig.cur.copy(rP)
-        camera.position.copy(rig.cur)
-        camera.lookAt(rF)
-        camera.rotation.z = Math.sin(e * Math.PI) * r.bank
-
-        if (r.t >= 1) { r.on = false; rig.tgt.copy(r.e) }
-      } else {
-        camera.rotation.z *= 0.9
-        rig.cur.x += (rig.tgt.x + ptr.x * 0.20 - rig.cur.x) * 0.06
-        rig.cur.y += (rig.tgt.y + ptr.y * 0.16 - rig.cur.y) * 0.06
-        rig.cur.z += (rig.tgt.z - rig.cur.z) * 0.06
-        camera.position.copy(rig.cur)
-        camera.lookAt(0, 0, 0)
-      }
 
       renderer.render(scene, camera)
     }
     animate()
 
-    // ── Resize handler ──────────────────────────────────────────────────
+    // ── Resize ─────────────────────────────────────────────────────────────
     const onResize = () => {
       camera.aspect = mount.clientWidth / mount.clientHeight
       camera.updateProjectionMatrix()
@@ -622,15 +738,13 @@ export default function GlobeScene() {
     }
     window.addEventListener('resize', onResize)
 
-    // ── Cleanup ─────────────────────────────────────────────────────────
+    // ── Cleanup ────────────────────────────────────────────────────────────
     return () => {
       cancelAnimationFrame(fid)
-      mount.removeEventListener('mousemove',  onMM)
-      mount.removeEventListener('mousedown',  onMD)
-      mount.removeEventListener('mouseup',    onMU)
-      mount.removeEventListener('mouseleave', onML)
-      mount.removeEventListener('click',      onCLK)
-      window.removeEventListener('resize',    onResize)
+      window.removeEventListener('keydown',  onKeyDown)
+      window.removeEventListener('keyup',    onKeyUp)
+      window.removeEventListener('resize',   onResize)
+      mount.removeEventListener('click',     onCLK)
       renderer.dispose()
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
     }
