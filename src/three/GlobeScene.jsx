@@ -114,7 +114,15 @@ export default function GlobeScene() {
     const cameraRig = {
       current: new THREE.Vector3(0, 0, 6),
       target: new THREE.Vector3(0, 0, 6),
-      focusTime: 0,
+      ride: {
+        active: false,
+        progress: 0,
+        duration: 1.2,
+        start: new THREE.Vector3(0, 0, 6),
+        control: new THREE.Vector3(0, 0, 6),
+        end: new THREE.Vector3(0, 0, 6),
+        bank: 0,
+      },
     }
 
     const updatePointer = (clientX, clientY) => {
@@ -124,18 +132,37 @@ export default function GlobeScene() {
     }
 
     const focusSection = (id) => {
-      // One example camera animation path for now.
-      if (id === 'skills') {
-        cameraRig.target.set(1.6, 0.9, 4.2)
-      } else {
-        cameraRig.target.set(0, 0, 6)
+      const destinations = {
+        skills: new THREE.Vector3(1.6, 0.9, 4.2),
+        projects: new THREE.Vector3(-1.35, 0.55, 4.45),
+        contact: new THREE.Vector3(0.6, -1.25, 4.35),
       }
-      cameraRig.focusTime = 1
+
+      const end = destinations[id]
+      if (!end) return
+
+      const ride = cameraRig.ride
+      ride.active = true
+      ride.progress = 0
+      ride.start.copy(cameraRig.current)
+      ride.end.copy(end)
+      // Elevated midpoint creates a smooth "motorcycle" arc path.
+      ride.control
+        .copy(ride.start)
+        .lerp(ride.end, 0.5)
+        .add(new THREE.Vector3(0, 0.9, -0.35))
+
+      const lateral = ride.end.x - ride.start.x
+      ride.bank = THREE.MathUtils.clamp(lateral * 0.12, -0.2, 0.2)
     }
 
+    let dragMoved = false
     const onMouseMove = (e) => {
       updatePointer(e.clientX, e.clientY)
       if (!isDragging) return
+      if (Math.abs(e.clientX - dragStartX) + Math.abs(e.clientY - dragStartY) > 4) {
+        dragMoved = true
+      }
       const dx = (e.clientX - dragStartX) * 0.004
       const dy = (e.clientY - dragStartY) * 0.004
       yawTarget = dragYaw + dx
@@ -144,6 +171,7 @@ export default function GlobeScene() {
 
     const onMouseDown = (e) => {
       isDragging = true
+      dragMoved = false
       dragStartX = e.clientX
       dragStartY = e.clientY
       dragYaw = yawTarget
@@ -155,6 +183,7 @@ export default function GlobeScene() {
     }
 
     const onClick = () => {
+      if (dragMoved) return
       if (hoveredPoint) focusSection(hoveredPoint.userData.id)
     }
 
@@ -173,10 +202,13 @@ export default function GlobeScene() {
 
     let frameId
     const clock = new THREE.Clock()
+    const ridePos = new THREE.Vector3()
+    const rideForwardPos = new THREE.Vector3()
 
     const animate = () => {
       frameId = requestAnimationFrame(animate)
       const elapsed = clock.getElapsedTime()
+      const delta = Math.min(clock.getDelta(), 0.033)
 
       pointer.x += (pointerTarget.x - pointer.x) * 0.08
       pointer.y += (pointerTarget.y - pointer.y) * 0.08
@@ -203,19 +235,44 @@ export default function GlobeScene() {
       particles.rotation.y = elapsed * 0.015
       particles.rotation.x = elapsed * 0.007
 
-      const targetCamX = cameraRig.target.x + pointer.x * 0.2
-      const targetCamY = cameraRig.target.y + pointer.y * 0.16
-      cameraRig.current.x += (targetCamX - cameraRig.current.x) * 0.06
-      cameraRig.current.y += (targetCamY - cameraRig.current.y) * 0.06
-      cameraRig.current.z += (cameraRig.target.z - cameraRig.current.z) * 0.06
-      camera.position.copy(cameraRig.current)
-      camera.lookAt(0, 0, 0)
+      const ride = cameraRig.ride
+      if (ride.active) {
+        ride.progress = Math.min(1, ride.progress + delta / ride.duration)
+        const t = ride.progress
+        const eased = 1 - Math.pow(1 - t, 3)
 
-      if (cameraRig.focusTime > 0) {
-        cameraRig.focusTime -= 0.01
-        if (cameraRig.focusTime <= 0) {
-          cameraRig.target.set(0, 0, 6)
+        // Quadratic Bezier interpolation for curved camera travel.
+        ridePos
+          .copy(ride.start)
+          .multiplyScalar((1 - eased) * (1 - eased))
+          .addScaledVector(ride.control, 2 * (1 - eased) * eased)
+          .addScaledVector(ride.end, eased * eased)
+
+        const lookAheadT = Math.min(1, eased + 0.03)
+        rideForwardPos
+          .copy(ride.start)
+          .multiplyScalar((1 - lookAheadT) * (1 - lookAheadT))
+          .addScaledVector(ride.control, 2 * (1 - lookAheadT) * lookAheadT)
+          .addScaledVector(ride.end, lookAheadT * lookAheadT)
+
+        cameraRig.current.copy(ridePos)
+        camera.position.copy(cameraRig.current)
+        camera.lookAt(rideForwardPos)
+        camera.rotation.z = Math.sin(eased * Math.PI) * ride.bank
+
+        if (t >= 1) {
+          ride.active = false
+          cameraRig.target.copy(ride.end)
         }
+      } else {
+        camera.rotation.z *= 0.9
+        const targetCamX = cameraRig.target.x + pointer.x * 0.2
+        const targetCamY = cameraRig.target.y + pointer.y * 0.16
+        cameraRig.current.x += (targetCamX - cameraRig.current.x) * 0.06
+        cameraRig.current.y += (targetCamY - cameraRig.current.y) * 0.06
+        cameraRig.current.z += (cameraRig.target.z - cameraRig.current.z) * 0.06
+        camera.position.copy(cameraRig.current)
+        camera.lookAt(0, 0, 0)
       }
 
       renderer.render(scene, camera)
