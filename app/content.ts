@@ -1,7 +1,7 @@
 // Professional details from the supplied résumé and repositories, reviewed 2026-09-15.
 export const portfolio = {
   name: "Lycos Blanza",
-  resume: "/Lycos_Blanza_Resume.docx",
+  resume: "/blanza_lycos-resume.pdf",
   email: "blanzalycos@gmail.com",
   phone: "0995 678 3687",
   phoneHref: "tel:+639956783687",
@@ -22,15 +22,7 @@ export const projects = [
     url: "https://github.com/lycos-dev/SafeSeat",
   },
   {
-    id: "influentify", number: "02", title: "Influentify", category: "Full-Stack / Creator Research",
-    description: "A creator-sourcing workspace that brings public-profile discovery, evidence review, and shortlist exports into one repeatable workflow.",
-    focus: "Reliable data handling across a React interface, Express API, and PostgreSQL database.",
-    technologies: ["React", "TypeScript", "Express", "PostgreSQL", "Prisma"],
-    details: ["Discovers public profiles through the Brave Search API and retains evidence from original source pages for review.", "Normalizes creator handles, rejects duplicates, and keeps previously used or voided creators out of new lists.", "Separates fit scoring from data confidence and exports reviewed creator lists to Excel."],
-    url: "https://github.com/lycos-dev/Influentify",
-  },
-  {
-    id: "docvia", number: "03", title: "DocVia", category: "Web Application / Learning",
+    id: "docvia", number: "02", title: "DocVia", category: "Web Application / Learning",
     description: "An AI-powered learning project that turns PDFs into structured lessons, with contextual questions and quizzes to support active recall.",
     focus: "Document-based learning and a clear, reusable React interface.",
     technologies: ["React", "TypeScript", "Vite"],
@@ -38,7 +30,7 @@ export const projects = [
     url: "https://github.com/Waldric/docvia-frontend",
   },
   {
-    id: "fitness", number: "04", title: "NEXA", category: "Mobile Application / Fitness",
+    id: "fitness", number: "03", title: "NEXA", category: "Mobile Application / Fitness",
     description: "A mobile fitness tracker for planning routines, logging workouts, and revisiting exercise history through a consistent, accessible interface.",
     focus: "Reusable mobile components, typed navigation, and local persistence.",
     technologies: ["React Native", "Expo", "TypeScript", "AsyncStorage"],
