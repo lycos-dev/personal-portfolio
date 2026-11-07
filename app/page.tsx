@@ -249,7 +249,7 @@ export default function Home() {
                     className="button secondary"
                     href={portfolio.resume}
                     download
-                    aria-label="Download Lycos Blanza résumé as a Word document"
+                    aria-label="Download Lycos Blanza résumé as a PDF"
                   >
                     Download Résumé <span aria-hidden="true">↓</span>
                   </a>
@@ -378,8 +378,9 @@ export default function Home() {
                 <span className="timeline-date">DATACAMP</span>
                 <h3>Courses & Certifications</h3>
                 <p>
-                  Python, R, Pytorch, Tidyverse, Pandas, Statistical Fundamentals,
-                  Exploratory Analysis, and Statistical Experimentation.
+                  Python, R, Pytorch, Tidyverse, Pandas, Statistical
+                  Fundamentals, Exploratory Analysis, and Statistical
+                  Experimentation.
                 </p>
               </li>
             </ol>
